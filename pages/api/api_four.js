@@ -1,6 +1,6 @@
-import { sendMail } from "service/mailService";
-import { connectMongoDB } from 'lib/mongodb';
-import EmailTracking from "models/EmailTracking";
+import sendMail from "@/service/mailService";
+import { connectMongoDB } from '@/lib/mongodb';
+import EmailTracking from "@/models/EmailTracking";
 
 const handler = async (req, res) => {
   try {

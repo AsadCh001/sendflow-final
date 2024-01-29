@@ -34,7 +34,7 @@ export async function POST(req) {
 
 
 export async function GET(req) {
-  let {url} = await req;
+  let { url } = await req;
   await connectMongoDB();
 
   const urlParts = url.split('?');
@@ -44,17 +44,19 @@ export async function GET(req) {
 
   const queryParams = new URLSearchParams(urlParts[1]);
   const mail = queryParams.get('variableName');
-console.log(mail);
-    try {
 
-      // Use the userEmail for filtering campaigns
-      const campaigns = await Campaign.find({ user: mail });
-      console.log(campaigns);
-      return NextResponse.json({ campaigns });
-    } catch (error) {
-      console.error('Error fetching:', error); // Log the error for debugging
-      return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
-    }
+  if (!mail) {
+    return NextResponse.json({ error: 'Email parameter missing' }, { status: 400 });
+  }
+
+  try {
+    const campaigns = await Campaign.find({ user: mail });
+    console.log(campaigns);
+    return NextResponse.json({ campaigns });
+  } catch (error) {
+    console.error('Error fetching:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
 }
 
 

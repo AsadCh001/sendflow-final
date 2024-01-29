@@ -6,7 +6,7 @@ import RemoveBtn from "./RemoveBtn";
 import { useSession } from "next-auth/react";
 import './campaign.css'
 
-export default function Campaigns({ setMainTitle }) {
+export default function Campaigns() {
   const [createCampaigns, setCreateCampaigns] = useState(false);
   const [campaignData, setCampaignData] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null); // Added state for selected campaign
@@ -22,24 +22,35 @@ export default function Campaigns({ setMainTitle }) {
   const { data: user } = useSession();
   const mail = user?.user?.email;
 
-  const fetchData = async () => {
-    try {
-  //    const apiUrl = `https://snowflow.devsassemble.com/api/campaign?variableName=${encodeURIComponent(mail)}`;
-  const apiUrl = `${process.env.NEXT_PUBLIC_URL}api/campaign?variableName=${encodeURIComponent(mail)}`;
-      const response = await fetch(apiUrl, {
-        method: "GET",
-      });
-
-      if (response.status === 200) {
-        const { campaigns } = await response.json();
-        setCampaignData(campaigns);
-      } else {
-        console.error("Error fetching campaigns:", response.statusText);
-      }
-    } catch (error) {
-      console.error("Error fetching campaigns:", error);
+  useEffect(() => {
+    // Only run fetchData if mail is not null or undefined
+    if (mail) {
+      fetchData();
     }
-  };
+  }, [mail]); // Add mail as a dependency
+
+  const fetchData = async () => {
+    if (!mail) return; // Ensure mail is available
+
+  try {
+    // Ensure there is a slash before 'api'
+    const apiUrl = `${process.env.NEXT_PUBLIC_URL}/api/campaign?variableName=${encodeURIComponent(mail)}`;
+    console.log("url:", apiUrl);
+
+    const response = await fetch(apiUrl, {
+      method: "GET",
+    });
+
+    if (response.status === 200) {
+      const { campaigns } = await response.json();
+      setCampaignData(campaigns);
+    } else {
+      console.error("Error fetching campaigns:", response.statusText);
+    }
+  } catch (error) {
+    console.error("Error fetching campaigns:", error);
+  }
+};
 
   useEffect(() => {
     fetchData();

@@ -17,6 +17,7 @@
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.0",
     "cookies": "^0.8.0",
+    "emailjs": "^4.0.3",
     "eslint": "8.46.0",
     "eslint-config-next": "13.4.12",
     "exceljs": "^4.3.0",

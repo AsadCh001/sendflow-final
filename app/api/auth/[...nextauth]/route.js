@@ -18,6 +18,7 @@ export const authOptions = {
           const user = await User.findOne({ email });
 
           if (!user) {
+            console.log("user not exists")
             return null;
           }
 
