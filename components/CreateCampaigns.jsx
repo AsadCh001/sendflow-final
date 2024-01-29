@@ -137,7 +137,7 @@ function CreateCampaign({
         console.log('No additional accounts to authenticate');
       }
 
-
+       console.log("filename",filename);
       const res = await axios.post('/api/campaign', {
         subject,
         body,
@@ -227,7 +227,7 @@ function CreateCampaign({
         setError("Please Upload File");
         return;
       }
-      
+      console.log(uploadedFilename);
       // Implement your logic here to handle the table data
       setTableData(tableData);
       setfilename(uploadedFilename);

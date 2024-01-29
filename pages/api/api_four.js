@@ -8,7 +8,9 @@ const handler = async (req, res) => {
     switch (method) {
       case "POST": {
         const { subject, body, email, appPassword, additionalAccounts, data, dateInfo, id, mail } = req.body;
-        console.log(email, appPassword, additionalAccounts, data, subject, body, dateInfo, id, mail);
+        const dateTimeObject = new Date();
+        console.log(`Time: ${dateTimeObject.toTimeString()}`);
+        console.log("checking = ",email, appPassword, additionalAccounts, data, subject, body, dateInfo, id, mail);
 
         const companyRegex = /\{company\}/g;
         const otherRegex = /\{other\}/g;

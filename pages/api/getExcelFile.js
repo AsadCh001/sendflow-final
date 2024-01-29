@@ -1,55 +1,42 @@
-import path from 'path';
-import fs from 'fs';
-import { parse } from 'url';
-import ExcelJS from 'exceljs'; // Import exceljs
+import fetch from 'node-fetch';
+import ExcelJS from 'exceljs';
 
-const uploadDir = path.join(process.cwd(), 'public/uploads');
-
-export default async (req, res) => {
+const processExcelFile = async (req, res) => {
   try {
-    const { query } = parse(req.url, true);
-    const { filename } = query;
-
-    if (!filename) {
-      res.status(400).json({ message: 'No filename provided.' });
-      return;
+    // Extract the excelFile URL from the request
+    const excelFile = req.body.filename || req.query.filename;
+    if (!excelFile) {
+      return res.status(400).json({ message: 'No Excel file URL provided.' });
     }
 
-    // Construct the full file path based on the filename and the upload directory
-    const filePath = path.join(uploadDir, filename);
-
-    // Check if the file exists
-    if (!fs.existsSync(filePath)) {
-      res.status(404).json({ message: 'File not found.' });
-      return;
+    // Fetch the Excel file from the Cloudinary URL
+    const response = await fetch(excelFile);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
+    const fileData = await response.buffer();
 
-    // Read the file data
-    const fileData = fs.readFileSync(filePath);
-
-    // Create a new workbook from the file data
+    // Load the file data into ExcelJS
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(fileData);
 
-    // Assuming you want to access the first sheet in the Excel file
+    // Process the first worksheet
     const worksheet = workbook.getWorksheet(1);
-
-    // Convert the worksheet to an array of objects (representing rows)
     const jsonData = [];
     worksheet.eachRow({ includeEmpty: true }, (row, rowNumber) => {
       const rowData = {};
-      row.eachCell((cell, colNumber) => {
+      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
         rowData[`column${colNumber}`] = cell.value;
       });
       jsonData.push(rowData);
     });
 
-    console.log(jsonData);
-
-    // Send the parsed data in the response
-    res.status(200).json({ message: 'File retrieved successfully.', data: jsonData });
+    // Respond with the processed data
+    res.status(200).json({ message: 'Excel file processed successfully.', data: jsonData });
   } catch (error) {
-    console.error('Error retrieving file:', error);
-    res.status(500).json({ message: 'An error occurred while retrieving the file.' });
+    console.error('Error processing Excel file:', error);
+    res.status(500).json({ message: 'An error occurred while processing the Excel file.' });
   }
 };
+
+export default processExcelFile;

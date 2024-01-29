@@ -24,7 +24,7 @@ const campaignSchema = new mongoose.Schema({
   },
   excelFile: {
     type: String,
-    required: true, // Provide a default value that makes sense for excelFile
+    required: true, // This line makes the field required
   },
   schedulingData: {
     type: String,

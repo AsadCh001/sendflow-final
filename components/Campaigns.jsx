@@ -81,6 +81,7 @@ export default function Campaigns() {
   }, [campaignData, selectedCampaign]); 
 
   const handleEditClick = (campaign) => {
+    console.log(campaign);
     setSelectedCampaign(campaign); // Set the selected campaign data
     setIsEditClicked(true); // Set isEditClicked to true
     setCreateCampaigns(false); // Disable create button

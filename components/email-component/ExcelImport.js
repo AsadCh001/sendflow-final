@@ -36,23 +36,23 @@ const ExcelImport = ({ onTableDataChange,tableData:tableprop, file }) => {
 
   const ReadExcel = async (filename) => {
     try {
-      console.log(filename)
-      const apiUrl = (`${process.env.NEXT_PUBLIC_URL}api/getExcelFile?filename=${encodeURIComponent(filename)}`);
-      const response = await fetch(apiUrl, {
-        method: "GET",
-      });
+      console.log("Filename:", filename);
+      const apiUrl = `${process.env.NEXT_PUBLIC_URL}api/getExcelFile?filename=${filename}`;
+  
+      const response = await fetch(apiUrl, { method: "GET" });
   
       if (response.status === 200) {
-      
-          const  filedata  = await response.json();
-  
-        // Process the fileContents as needed (e.g., parse the Excel file)
-        console.log('File contents:', filedata.data);
-        setFileData(filedata.data);
-  
-        // Continue with your logic...
+        const fileData = await response.json();
+         
+        // Process the file data as needed
+        console.log('File contents:', fileData.data);
+        const filteredArray=fileData.data.filter(item => {
+          // Check if item is an object and not an array, and has keys
+          return typeof item === 'object' && item !== null && !Array.isArray(item) && Object.keys(item).length > 0;
+        });
+        setFileData(filteredArray);  // Assuming setFileData is a state setter function
       } else {
-        console.error('Error:', response.data);
+        console.error('Error with response:', response);
         setError('An error occurred while retrieving the file.');
       }
     } catch (error) {
@@ -60,6 +60,8 @@ const ExcelImport = ({ onTableDataChange,tableData:tableprop, file }) => {
       setError('An error occurred while retrieving the file.');
     }
   };
+  
+  
 
 
   const importExcel = async (e) => {
@@ -158,29 +160,43 @@ const ExcelImport = ({ onTableDataChange,tableData:tableprop, file }) => {
   
       return (
         <table className="table">
-          <thead>
-            <tr>
-              {columns.map((columnName) => (
-                <th key={columnName} className="th">
-                  {columnNames[columnName]}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row, rowIndex) => (
-              <tr key={rowIndex}>
-                {columns.map((columnName) => (
-                  <td key={columnName} className="td-border">
-                    {typeof row[columnName] === 'object'
-                      ? row[columnName].text
-                      : row[columnName]}
-                  </td>
-                ))}
-              </tr>
+        <thead>
+          <tr>
+            {columns.map((header, headerIndex) => (
+              <th key={headerIndex} className="th">{header}</th>
             ))}
-          </tbody>
-        </table>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, rowIndex) => (
+            <tr key={rowIndex}>
+              {columns.map((columnName, cellIndex) => {
+                const cellValue = row[columnName];
+                let displayValue;
+      
+                if (cellValue && typeof cellValue === 'object') {
+                  // Check if the object is empty
+                  if (Object.keys(cellValue).length === 0) {
+                    displayValue = ''; // Render empty string for empty objects
+                  } else {
+                    displayValue = cellValue.text || ''; // Render 'text' property or empty string if 'text' is not available
+                  }
+                } else {
+                  displayValue = cellValue != null ? cellValue : ''; // Render the cellValue if it's not null or undefined, otherwise render empty string
+                }
+      
+                return (
+                  <td key={`${rowIndex}-${cellIndex}`} className="td-border">
+                    {displayValue}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      
+      
       );
     }
     return null; // Return null if data is empty

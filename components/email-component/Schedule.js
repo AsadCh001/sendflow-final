@@ -1,10 +1,8 @@
-"use client"
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
-import './schedule.css'
 
-export default function CalendarGfg({ takedateInfo, dateInfo, schedule:propdate }) {
+export default function CalendarGfg({ takedateInfo, dateInfo, schedule: propdate }) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [currentTime, setCurrentTime] = useState(new Date());
   const [selectedHours, setSelectedHours] = useState(dateInfo?.hours || 0);
@@ -12,20 +10,15 @@ export default function CalendarGfg({ takedateInfo, dateInfo, schedule:propdate 
   const [selectedSeconds, setSelectedSeconds] = useState(dateInfo?.seconds || 0);
   const [error, setError] = useState('');
 
-
   useEffect(() => {
     if (propdate) {
       const data = JSON.parse(propdate);
-      console.log(data);
       setSelectedHours(data.hours);
       setSelectedMinutes(data.minutes);
       setSelectedSeconds(data.seconds);
     }
   }, [propdate]);
 
-
-
-  
   const updateTime = () => {
     setCurrentTime(new Date());
   };
@@ -34,83 +27,74 @@ export default function CalendarGfg({ takedateInfo, dateInfo, schedule:propdate 
     setSelectedDate(date);
   };
 
-  // Update the time every second
   useEffect(() => {
     const intervalId = setInterval(updateTime, 1000);
-
-    // Cleanup the interval on component unmount
     return () => clearInterval(intervalId);
   }, []);
 
-  
   const sendEmailAtCurrentTime = () => {
-    const currentDateTime = new Date();
-    currentDateTime.setMinutes(currentDateTime.getMinutes() + 1);
+    const currentDateTimeUTC = new Date();
+  
+    // Define arrays to map month and day numbers to their names
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
     const currentDateTimeInfo = {
-      day: currentDateTime.toLocaleDateString('en-US', { weekday: 'short' }),
-      month: currentDateTime.toLocaleDateString('en-US', { month: 'short' }),
-      date: currentDateTime.getDate(),
-      hours: currentDateTime.getHours(),
-      minutes: currentDateTime.getMinutes(),
-      seconds: currentDateTime.getSeconds(),
-      
+      day: days[currentDateTimeUTC.getUTCDay()],      // Get the name of the day
+      month: months[currentDateTimeUTC.getUTCMonth()], // Get the name of the month
+      date: currentDateTimeUTC.getUTCDate(),
+      hours: currentDateTimeUTC.getUTCHours(),
+      minutes: currentDateTimeUTC.getUTCMinutes()+2,
+      seconds: currentDateTimeUTC.getUTCSeconds(),
     };
-    setSelectedHours(currentDateTime.getHours());
-    setSelectedMinutes(currentDateTime.getMinutes());
-    setSelectedSeconds(currentDateTime.getSeconds());
+  
+    setSelectedHours(currentDateTimeInfo.hours);
+    setSelectedMinutes(currentDateTimeInfo.minutes);
+    setSelectedSeconds(currentDateTimeInfo.seconds);
+  
     takedateInfo(currentDateTimeInfo);
   };
+  
 
   const submitDate = () => {
-    if (
-      selectedHours === 0 &&
-      selectedMinutes === 0 &&
-      selectedSeconds === 0
-    ) 
-    {
-      // If no specific time is selected, send email at the current time
+    // Create a UTC Date object directly from the selected date and UTC time parts
+    if (selectedHours === 0 && selectedMinutes === 0 && selectedSeconds === 0) {
       sendEmailAtCurrentTime();
-      
-    } 
-    
-    else {
-      // ... rest of your submitDate logic for scheduling
-      
-  
-    const selectedDateInfo = {
-      day: selectedDate.toLocaleDateString('en-US', { weekday: 'short' }),
-      month: selectedDate.toLocaleDateString('en-US', { month: 'short' }),
-      date: selectedDate.getDate(),
-      hours: selectedHours,
-      minutes: selectedMinutes,
-      seconds: selectedSeconds,
-    };
-
-    // Calculate the selected date and time as a JavaScript Date object
-    const selectedDateTime = new Date(
-      selectedDate.getFullYear(),
-      selectedDate.getMonth(),
-      selectedDate.getDate(),
-      selectedHours,
-      selectedMinutes,
-      selectedSeconds
-    );
-
-    // Check if the selected date and time are in the past
-    if (selectedDateTime <= currentTime) {
-      setError('Cannot schedule Time in the past.');
-      setTimeout(() => {
-        setError('');
-      }, 2000);
-      return;
     }
+    else {
+      const selectedDateTimeUTC = new Date(Date.UTC(
+        selectedDate.getFullYear(),
+        selectedDate.getMonth(),
+        selectedDate.getDate(),
+        selectedHours,
+        selectedMinutes,
+        selectedSeconds
+      ));
 
-    // Clear the error if it was previously set
-    setError('');
+      // Get the current UTC time for comparison
+      const currentUTC = new Date();
 
-    
-    takedateInfo(selectedDateInfo);
-  
+      // Check if the selected UTC date and time are in the past compared to current UTC time
+      if (selectedDateTimeUTC < currentUTC) {
+        setError('Cannot schedule time in the past.');
+        setTimeout(() => {
+          setError('');
+        }, 2000);
+        return;
+      }
+
+      // Format the selected date info in UTC
+      const selectedDateInfoUTC = {
+        day: selectedDateTimeUTC.getUTCDay(),
+        month: selectedDateTimeUTC.getUTCMonth(),
+        date: selectedDateTimeUTC.getUTCDate(),
+        hours: selectedDateTimeUTC.getUTCHours(),
+        minutes: selectedDateTimeUTC.getUTCMinutes(),
+        seconds: selectedDateTimeUTC.getUTCSeconds(),
+      };
+
+      setError('');
+      takedateInfo(selectedDateInfoUTC);
     }
   };
 
@@ -120,14 +104,13 @@ export default function CalendarGfg({ takedateInfo, dateInfo, schedule:propdate 
   const secondOptions = Array.from({ length: 60 }, (_, i) => i);
 
   return (
-    <div className="calendar-container">
-    <div className="flex-container">
+    <div className="mt-5 space-y-4">
+      <div className="flex space-x-4">
         <div>
-          <label className="select-label">Select Hour:</label>
+          <label>Select Hour:</label>
           <select
             value={selectedHours}
             onChange={(e) => setSelectedHours(Number(e.target.value))}
-            className="select-input"
           >
             {hourOptions.map((hour) => (
               <option key={hour} value={hour}>
@@ -137,11 +120,10 @@ export default function CalendarGfg({ takedateInfo, dateInfo, schedule:propdate 
           </select>
         </div>
         <div>
-          <label className="select-label">Select Minute:</label>
+          <label>Select Minute:</label>
           <select
             value={selectedMinutes}
             onChange={(e) => setSelectedMinutes(Number(e.target.value))}
-            className="select-input"
           >
             {minuteOptions.map((minute) => (
               <option key={minute} value={minute}>
@@ -151,11 +133,10 @@ export default function CalendarGfg({ takedateInfo, dateInfo, schedule:propdate 
           </select>
         </div>
         <div>
-          <label className="select-label">Select Second:</label>
+          <label>Select Second:</label>
           <select
             value={selectedSeconds}
             onChange={(e) => setSelectedSeconds(Number(e.target.value))}
-            className="select-input"
           >
             {secondOptions.map((second) => (
               <option key={second} value={second}>
@@ -170,23 +151,18 @@ export default function CalendarGfg({ takedateInfo, dateInfo, schedule:propdate 
         <Calendar
           onChange={handleDateChange}
           value={selectedDate}
-          minDate={new Date()} // Prevent selecting past dates
+          minDate={new Date()}
         />
       </div>
 
-      <strong >Current Time:</strong>
+      <strong>Current Time:</strong>
       <div>{currentTime.toLocaleTimeString()}</div>
 
       <div>
-        <button
-          onClick={submitDate}
-          className="button-schedule"
-        >
-          Set Schedule
-        </button>
+        <button onClick={submitDate}>Set Schedule</button>
       </div>
 
-      {error && <p className="error-message">{error}</p>}
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 }

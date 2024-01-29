@@ -1,37 +1,47 @@
 import multer from 'multer';
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 
-// Define a function to generate the filename
-const generateFilename = (req, file, cb) => {
-  const filename = `${Date.now()}-${file.originalname}`;
-  req.generatedFilename = filename; // Store the generated filename in the request object
-  cb(null, filename);
-};
-
-// Create a storage engine for multer to use
-const storage = multer.diskStorage({
-  destination: 'public/uploads', // Define your upload folder path
-  filename: generateFilename, // Use the custom filename generator
+cloudinary.config({
+  cloud_name: 'dpkkaacjk',
+  api_key: '775987195199584',
+  api_secret: 'uLSlA65oNFr-jqWLGYmPPVElLT0',
 });
 
-// Create multer instance using the storage engine
+// Create a storage engine for multer to use with Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'uploads',
+    resource_type: 'raw',
+    public_id: (req, file) => `${Date.now()}-${file.originalname}`,
+  },
+});
+
 const upload = multer({ storage });
 
 export const config = {
   api: {
-    bodyParser: false, // Disable default body parser
+    bodyParser: false,
   },
 };
 
 const uploadExcelMiddleware = upload.single('ExcelFile');
 
 const uploadExcelAPI = (req, res) => {
-  uploadExcelMiddleware(req, res, async (err) => {
+  uploadExcelMiddleware(req, res, (err) => {
     if (err) {
-      res.status(500).json({ error: 'Internal Server Error' });
-    } else {
-      const filename = req.generatedFilename; // Retrieve the generated filename from the request object
-      console.log(filename);
+      console.error('Upload Error:', err);
+      return res.status(500).json({ error: 'Internal Server Error', details: err.message });
+    }
+
+    // Using Cloudinary's response to get the filename
+    if (req.file && req.file.path) {
+      const filename = req.file.path;  // This is the file URL/path provided by Cloudinary
+      console.log('Uploaded Filename:', filename);
       res.status(200).json({ success: true, filename });
+    } else {
+      res.status(500).json({ error: 'File upload failed', details: 'No file info received' });
     }
   });
 };
